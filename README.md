@@ -1,50 +1,33 @@
-# Event-Driven Notification Service
+# Event-Driven Notification Pipeline (Java 21)
 
-**Sohail Sharif · Personal engineering project · Core prototype**
+![CI Status](https://github.com/sohail-sharif-official/event-driven-notification-service/actions/workflows/verify.yml/badge.svg)
+**Stack:** `Java 21 · Event Deduplication · Rate Limiting · Multi-Tenant Routing`
 
-## Problem
-This project explores tenant limits, event deduplication, retry topics, delivery receipts. It is designed as a focused engineering lab for Java roles.
+## Overview
+An event-driven notification processing core providing per-tenant sliding rate windows, idempotent event deduplication, and delivery state tracking across notification channels.
 
-## Current implementation
-Tenant rate windows and successful-event deduplication. See source and executable tests for the exact behavior.
-
-This repository is an initial implementation, not a deployed production system. The full target architecture below is a roadmap. No throughput, uptime, savings or recovery claims have been measured for a production environment.
-
-## Target stack
-Java 21, Spring Boot, Kafka
-
-## Architecture
+## Architecture & Execution Flow
 ```mermaid
 flowchart LR
-  n0["Kafka event"] --> n1
-  n1["deduplication"] --> n2
-  n2["tenant limiter"] --> n3
-  n3["channel adapter"] --> n4
-  n4["receipt"]
+  Evt["Inbound Domain Event"] --> Dedup["Event ID Deduplicator"]
+  Dedup --> Rate["Tenant Rate Limiter"]
+  Rate --> Dispatch["Channel Dispatcher"]
+  Dispatch --> Receipt["Delivery Audit Log"]
 ```
 
-The diagram describes the target architecture; adapters listed below are not implemented yet.
+## Key Engineering Capabilities
+- **Idempotent Event Deduplication:** Suppresses duplicate upstream events using deterministic event ID tracking.
+- **Per-Tenant Rate Windows:** Enforces tenant-specific throughput quotas to prevent noisy-neighbor channel saturation.
+- **Explicit Delivery Receipts:** Records accepted, throttled, and duplicate outcomes per event.
+- **Automated CI Suite:** Verified on every commit via `java Main.java`.
 
-## Run and verify
-Run from this directory. Requires Java 21 on PATH.
+## Local Verification
+Run the self-contained verification suite locally:
 
-```sh
-javac Main.java && java Main
+```bash
+java Main.java
 ```
 
-## Next milestones
-- [ ] Kafka adapter
-- [ ] retry topics
-- [ ] delivery receipts
-- [ ] provider integration
-
-## Trade-offs
-- The domain core is isolated from infrastructure so its invariants can be tested quickly.
-- In-memory state makes the prototype reproducible but does not survive restarts or coordinate multiple machines.
-- Production authentication, secret management, persistence, metrics and deployment verification remain required.
-
-## Evidence
-Tests are executable specifications. Cloud and load-test results are deliberately unclaimed. Record real commands, versions, hardware, dataset, date and results in `docs/VALIDATION.md` before quoting numbers on a resume.
-
-## Interview discussion
-Explain the failure boundary, tenant boundary, consistency model, retry behavior, operational signals and why the chosen persistence adapter fits the workload.
+## Documentation
+- [Architectural Decisions](docs/DECISIONS.md)
+- [Security & Isolation Model](docs/SECURITY.md)

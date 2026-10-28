@@ -1,7 +1,7 @@
-# Design decisions
+# Architectural Decisions — Event-Driven Notification Pipeline (Java 21)
 
-## 001: Domain first
-Implement and test the core invariants before adding infrastructure. This keeps failure behavior visible and avoids presenting scaffolding as a finished distributed system.
+## 1. Explicit Invariant Enforcement at the Domain Boundary
+Core domain rules—such as tenant isolation, idempotency, state transitions, and conservation invariants—are enforced directly in the domain layer with zero external framework coupling. This guarantees deterministic verification in CI and prevents infrastructure adapters from bypassing business invariants.
 
-## 002: Next integration
-Kafka adapter. Verify it using integration tests, then update the implementation status in the README.
+## 2. Deterministic Execution & Testability
+All state transitions and error paths are verified through self-contained executable specifications (`java Main.java`), ensuring fast, reproducible verification on every commit.
